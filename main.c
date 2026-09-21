@@ -5,8 +5,9 @@
 #include <string.h>
 
 int check_errors(gpg_error_t /* pointer to unsigned int*/ err) {
-  if (err) {
+  if (err != 0) {
     printf("\n");
+    printf("error: ");
     printf(gpgme_strerror(err));
     printf("\n");
     return err;
@@ -91,7 +92,72 @@ char *encryptText(char *message, char *password, gpg_error_t *err,
 
   // gets the encrypted text
   char *encrypted = gpgme_data_release_and_get_mem(encryptedText, len);
+  return encrypted;
 }
+
+char *decryptText(char *textToDecrypt, char *password, gpg_error_t *err,
+                  size_t *len) {
+  gpgme_ctx_t ctx;
+  gpgme_data_t plaintext;
+  gpgme_data_t encryptedText;
+
+  // this command is needed to start the gpgme library
+  // otherwise the gpgme_new command will return
+  // "GPG_ERR_NOT_OPERATIONAL"(or 176 in int)
+  gpgme_check_version(NULL);
+
+  *err = gpgme_new(&ctx);
+  if (check_errors(*err)) {
+    return NULL;
+  }
+  printf("gpgme iniciado com sucesso.\n");
+
+  *err = gpgme_set_protocol(ctx, GPGME_PROTOCOL_OPENPGP);
+  if (check_errors(*err)) {
+    return NULL;
+  }
+  printf("protocolo setado com sucesso.\n");
+
+  gpgme_set_passphrase_cb(ctx, passphrase_callback, (void *)password);
+
+  // converts the "message" variable into the plaintext variable
+  // TODO: remake the commment
+  *err = gpgme_data_new_from_mem(&encryptedText, textToDecrypt,
+                                 strlen(textToDecrypt), 0);
+  printf("mensagem salva com sucesso\n");
+
+  /* creates an output data object */
+  *err = gpgme_data_new(&plaintext);
+  if (check_errors(*err)) {
+    return NULL;
+  }
+  printf("output criado\n");
+
+  // This function is used to set the pinentry mode to loopback.
+  //  If this is not set, the program will return an "operation cancelled" error
+  *err = gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
+  if (check_errors(*err)) {
+    return NULL;
+  }
+  printf("modo alterado\n");
+
+  // encrypts the text
+  *err = gpgme_op_decrypt(ctx, encryptedText, plaintext);
+  if (check_errors(*err)) {
+    return NULL;
+  }
+  printf("texto criptografado\n");
+
+  // gets the encrypted text
+  char *normalText = gpgme_data_release_and_get_mem(plaintext, len);
+  plaintext = NULL;
+
+  return normalText;
+}
+
+/*
+
+*/
 
 int main(void) {
   gpg_error_t err;
@@ -103,8 +169,19 @@ int main(void) {
     printf("Encrypted data (%zu bytes):\n", len);
     fwrite(encrypted, 1, len, stdout);
     printf("\n");
-
-    gpgme_free(encrypted);
   }
+
+  // the following
+  char *normalText = decryptText(encrypted, "senha", &err, &len);
+  printf(normalText);
+  if (normalText) {
+    printf("\nDecrypted data (%zu bytes):\n", len);
+    fwrite(normalText, 1, len, stdout);
+    printf("\n");
+  }
+
+  // freeing the resources
+  gpgme_free(encrypted);
+  gpgme_free(normalText);
   return 0;
 }
