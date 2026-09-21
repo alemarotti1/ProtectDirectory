@@ -16,16 +16,20 @@ int check_errors(gpg_error_t /*unsigned int*/ err) {
 static gpgme_error_t passphrase_callback(void *hook, const char *uid_hint,
                                          const char *passphrase_info,
                                          int prev_was_bad, int fd) {
-  const char *passphrase = (const char *)hook;
+  const char *passphrase = hook;
 
   if (prev_was_bad)
     return gpgme_error(GPG_ERR_BAD_PASSPHRASE);
 
-  const gpg_error_t error = gpgme_io_write(fd, passphrase, strlen(passphrase));
-  if (error < 0)
-    return gpgme_error_from_errno(error);
+  const gpgme_error_t error1 =
+      gpgme_io_writen(fd, passphrase, strlen(passphrase));
+  if (error1 < 0)
+    return gpgme_error_from_errno(error1);
 
-  gpgme_io_write(fd, "\n", 1);
+  const gpgme_error_t error2 =
+      gpgme_io_writen(fd, passphrase, strlen(passphrase));
+  if (gpgme_io_writen(fd, "\n", 1) < 0)
+    return gpgme_error_from_errno(error2);
 
   return 0;
 }
