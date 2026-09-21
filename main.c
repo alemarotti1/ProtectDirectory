@@ -59,6 +59,10 @@ char *encryptText(char *message, char *password, gpg_error_t *err,
   }
   printf("protocolo setado com sucesso.\n");
 
+  // function that makes the result contain "-----BEGIN PGP MESSAGE-----"
+  //  and "-----END PGP MESSAGE-----"
+  gpgme_set_armor(ctx, 1);
+
   gpgme_set_passphrase_cb(ctx, passphrase_callback, (void *)password);
 
   // converts the "message" variable into the plaintext variable
