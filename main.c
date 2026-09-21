@@ -1,7 +1,10 @@
+#include <gpgme.h>
 #include <stdio.h>
 
-
 int main(void) {
-    printf("Olá Mundo!\n");
-    return 0;
+
+  printf(GPGME_VERSION);
+  printf("\n");
+
+  return 0;
 }
