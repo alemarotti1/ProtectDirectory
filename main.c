@@ -25,6 +25,7 @@ static gpgme_error_t passphrase_callback(void *hook, const char *uid_hint,
 
   const gpgme_error_t error1 =
       gpgme_io_writen(fd, passphrase, strlen(passphrase));
+
   if (error1 < 0)
     return gpgme_error_from_errno(error1);
 
@@ -159,15 +160,16 @@ char *decryptText(char *textToDecrypt, char *password, gpg_error_t *err,
   return normalText;
 }
 
-/*
+struct string {
+  char **str;
+  int length;
+};
 
-*/
-
-int main(void) {
+void encrypting_decrypting(struct string message, struct string password) {
   gpg_error_t err;
   size_t len;
 
-  char *encrypted = encryptText("oi", "senha", &err, &len);
+  char *encrypted = encryptText(*(message.str), *(password.str), &err, &len);
 
   if (encrypted) {
     printf("Encrypted data (%zu bytes):\n", len);
@@ -187,5 +189,32 @@ int main(void) {
   // freeing the resources
   gpgme_free(encrypted);
   gpgme_free(normalText);
+}
+
+int process_command(struct string command) {
+  printf("%s", *(command.str));
+  int noOfOccurrences = 0;
+
+  for (int i = 0; i < strlen(*command.str); i++) {
+    if (1)
+      return 1;
+  }
+
+  return 0;
+}
+
+int main(void) {
+  //  struct string message;
+  //  char *strMessage = "oi";
+  //  message.str = &strMessage;
+  //  message.length = 2;
+  //
+  //  struct string password;
+  //  char *strPassword = "senha";
+  //  password.str = &strPassword;
+  //  password.length = 2;
+  //
+  //  encrypting_decrypting(message, password);
+
   return 0;
 }
